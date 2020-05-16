@@ -1,0 +1,13 @@
+[package]
+name = "qr"
+version = "0.1.0"
+authors = ["taku-y <taku.yoshioka.4096@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tch = { version = "0.1.7", path = "../../LaurentMazare/tch-rs" }
+ndarray = "0.13"
+csv = "1.1.3"
+ndarray-csv = "0.4.1"

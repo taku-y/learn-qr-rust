@@ -6,7 +6,7 @@ use ndarray::{Array2, s};
 use ndarray_csv::Array2Reader;
 extern crate tch;
 use tch::{Tensor, nn, Kind, nn::OptimizerConfig, nn::ModuleT, Device,
-          nn::VarStore};
+          nn::VarStore, IndexOp, NewAxis};
 
 pub fn load_data() -> Result<(Tensor, Tensor), Box<dyn Error>> {
     let pylib_dir = "/Users/taku-y/venvs/test/lib/python3.7/site-packages";
@@ -34,7 +34,7 @@ pub fn load_data() -> Result<(Tensor, Tensor), Box<dyn Error>> {
 }
 
 pub fn create_model(vs: &nn::Path, n_inputs: i64, n_quants: i64,
-    n_unitss: Vec::<i64>) -> impl nn::ModuleT {
+    n_unitss: Vec::<i64>, cumsum: bool) -> impl nn::ModuleT {
     let mut model = nn::seq_t();
     let mut n_inputs = n_inputs;
 
@@ -47,11 +47,22 @@ pub fn create_model(vs: &nn::Path, n_inputs: i64, n_quants: i64,
     }
 
     // Output layer
-    model = model.add(
-    nn::linear(vs / "out", n_inputs, n_quants, Default::default())
-    );
+    model = if !cumsum {
+        model.add(
+            nn::linear(vs / "out", n_inputs, n_quants, Default::default())
+        )
+    }
+    else {
+        model.add(
+            nn::linear(vs / "out", n_inputs, n_quants, Default::default())
+        )
+        .add_fn(|x| {
+            let x = Tensor::cat(&[x.i((.., 0, NewAxis)), x.i((.., 1..,)).exp()], 1);
+            x.cumsum(1, Kind::Float)
+        })
+    };
 
-    return model;
+    model
 }
 
 fn huber(x: &Tensor) -> Tensor {

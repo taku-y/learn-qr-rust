@@ -9,10 +9,10 @@ use tch::{Tensor, nn, Kind, nn::OptimizerConfig, nn::ModuleT, Device,
           nn::VarStore, IndexOp, NewAxis};
 
 pub fn load_data() -> Result<(Tensor, Tensor), Box<dyn Error>> {
-    let pylib_dir = "/Users/taku-y/venvs/test/lib/python3.7/site-packages";
-    let csv_file = "/sklearn/datasets/data/boston_house_prices.csv";
-    let csv_file = [pylib_dir, csv_file].concat();
-    let file = File::open(csv_file)?;
+    // let pylib_dir = "./"; // "/Users/taku-y/venvs/test/lib/python3.7/site-packages";
+    // let csv_file = "boston_house_prices.csv"; //"/sklearn/datasets/data/boston_house_prices.csv";
+    // let csv_file = [pylib_dir, csv_file].concat();
+    let file = File::open("./boston_house_prices.csv")?;
 
     let rdr = ReaderBuilder::new().has_headers(false).from_reader(file);
     let mut iter = rdr.into_records();
@@ -21,7 +21,7 @@ pub fn load_data() -> Result<(Tensor, Tensor), Box<dyn Error>> {
     iter.next();
     iter.next();
     let mut rdr = iter.into_reader();
-    let mut data: Array2<f32> = rdr.deserialize_array2((506, 14))?;
+    let mut data: Array2<f32> = rdr.deserialize_array2((505, 14))?;
     let xs = Tensor::try_from(data.slice_mut(s![.., 10..11]).to_owned())
         .unwrap();
     let ys = Tensor::try_from(data.slice_mut(s![.., 13..14]).to_owned())
@@ -69,13 +69,17 @@ fn huber(x: &Tensor) -> Tensor {
     // return torch.where(x.abs() < k, 0.5 * x.pow(2), k * (x.abs() - 0.5 * k))
 
     let k = 0.1f64;
-    let t1 = 0.5 * x.pow(2);
+    let t1 = 0.5f64 * x.pow(2f64);
     let t2 = &x.abs() - (0.5 * k);
 
     t1.where1(&t1.lt(k), &t2)
 }
 
 pub fn quantile_huber_loss(z: &Tensor, theta: &Tensor, tau: &Tensor) -> Tensor {
+    println!("{:?}", z.size());
+    println!("{:?}", theta.size());
+    println!("{:?}", tau.size());
+    panic!();
     let u = z - theta;
     let s = tau - u.lt(0f64).totype(Kind::Float);
 
